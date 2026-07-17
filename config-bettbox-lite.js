@@ -2,7 +2,7 @@ function main(config) {
   const newConfig = { ...config };
 
   const reservedGroupNames = new Set([
-    '手动选择',
+    '默认代理', // 修改点：保留字改名
     '自动选择',
     '漏网之鱼',
     'AI',
@@ -50,21 +50,21 @@ function main(config) {
   const autoGroup = {
     ...urlTestBaseOption,
     name: '自动选择',
-    hidden: false, // 设为 false，方便在前端面板查看测速结果与延迟
+    hidden: false, 
     proxies: uniq([...nodeOptions]),
   };
 
-  // 【修改点】业务代理组和漏网之鱼的基础公共选项，同时包含手动和自动
-  const commonGroupOptions = ['手动选择', '自动选择'];
+  // 业务代理组和漏网之鱼的基础公共选项，包含默认代理和自动选择
+  const commonGroupOptions = ['默认代理', '自动选择']; // 修改点：手动选择 -> 默认代理
 
-  // 【修改点】手动选择代理组：严格去掉“自动选择”，仅保留纯节点和直连
-  const manualGroup = {
+  // 【修改点】默认代理组：更名自“手动选择”，并在 proxies 中加入了“自动选择”
+  const defaultGroup = {
     ...selectBaseOption,
-    name: '手动选择',
-    proxies: uniq([...nodeOptions, 'DIRECT']),
+    name: '默认代理',
+    proxies: uniq(['自动选择', ...nodeOptions, 'DIRECT']), // 包含自动选择、纯节点和直连
   };
 
-  // 漏网之鱼代理组：包含公共选项（手动+自动）、纯节点和直连
+  // 漏网之鱼代理组：包含公共选项（默认代理+自动选择）、纯节点和直连
   const fallbackGroup = {
     ...selectBaseOption,
     name: '漏网之鱼',
@@ -87,7 +87,7 @@ function main(config) {
     openai: ruleProvider('openai', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/anthropic.yaml'),
     anthropic: ruleProvider('anthropic', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/anthropic.yaml'),
     google: ruleProvider('google', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/google.yaml'),
-    googlefcm: ruleProvider('googlefcm', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/googlefcm.yaml'),
+    googlefcm: ruleProvider('googlefcm', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/googlefcm.yaml'),
     youtube: ruleProvider('youtube', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.yaml'),
     netflix: ruleProvider('netflix', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.yaml'),
     spotify: ruleProvider('spotify', 'domain', 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/spotify.yaml'),
@@ -118,7 +118,6 @@ function main(config) {
   const finalRules = [];
 
   for (const svc of services) {
-    // 【修改点】由于 commonGroupOptions 引入了“自动选择”，业务代理组现在完美支持自动测速选项
     const groupProxies = svc.reject
       ? ['REJECT', 'DIRECT']
       : uniq([...commonGroupOptions, ...nodeOptions, 'DIRECT']);
@@ -166,9 +165,9 @@ function main(config) {
 
   newConfig.proxies = filteredProxies;
 
-  // 优化面板展示顺序：手动选择/自动选择（全局控） -> 业务细分策略组 -> 漏网之鱼全局兜底
+  // 优化面板展示顺序：默认代理（全局控） -> 自动选择 -> 业务细分策略组 -> 漏网之鱼全局兜底
   newConfig['proxy-groups'] = [
-    manualGroup,
+    defaultGroup,
     autoGroup,
     ...functionalGroups,
     fallbackGroup,
